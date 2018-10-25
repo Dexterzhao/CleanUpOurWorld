@@ -8,21 +8,22 @@ The following link gives specifc instructions.
 Scripts
 -------
 There are some scripts used to help importing these files, make sure you have installed python and dependent modules to run them.
-1.Suppose you have a bunch of *.csv* files
+
+1. Suppose you have a bunch of *.csv* files
 
 The *FrequencySummary.py* helps you to count the colomn names. Remember to change the **mypath** variable in the code to your own directory to find these *.csv* files. Then
 ```
 $ python FrequencySummary.py
 ```
 
-2.To reduce manual works that are simply some sqls with different table names, *SqlGenerator.py* is used to generate sqls for all your *.csv* files. The file generate sqls for using load_csv_file functions to import all the *.csv* files.
+2. To reduce manual works that are simply some sqls with different table names, *SqlGenerator.py* is used to generate sqls for all your *.csv* files. The file generate sqls for using load_csv_file functions to import all the *.csv* files.
 
 Remember to change the **mypath** variable in the code to your own directory to find these *.csv* files.
 ```
 $ python SqlsGenerator.py
 ```
 
-3.When you have some *.csv* files that only have location names but not the specific coordinates. Use *LocationToCooridnates.py* to extract the geographical locations from location names. In the case of this script, there are two columns that have related information to get coordinates, which are **water body** and **city**. This requires some basic understandings of python programming.
+3. When you have some *.csv* files that only have location names but not the specific coordinates. Use *LocationToCooridnates.py* to extract the geographical locations from location names. In the case of this script, there are two columns that have related information to get coordinates, which are **water body** and **city**. This requires some basic understandings of python programming.
 
 The location description is limited to 10 words in order to avoid errors, this has not been tested for possible extension. This will generate another *.csv* file.
 
@@ -87,12 +88,12 @@ Some tips when importing
 ------------------------
 1. There might be some column without names or with duplicated names, delete them if no data is in this column, or simply give it another name.
 
-2. It is better not to have "," in column name when using *load_csv_file* function
+2. It is better not to have "," or "/" in column name when using *load_csv_file* function
 
 3. Some data in the column might not be the data type that is convertible(e.g. from string to double), use Regex sql mentioned above to fix this
 
 4. When there is a format problem, use some text editor to save file in UTF-8 format.
 
-5. Do not extend the columns in some *csv* viewer incautiously, this will give you empty columns with empty names.
+5. Do not extend the columns in some *csv* viewers incautiously, this will give you empty columns with empty names.
 
 6. It is better to use PgAdmin as a graphical user interface. Link: <https://www.pgadmin.org/download/>
