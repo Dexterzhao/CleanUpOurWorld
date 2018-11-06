@@ -50,7 +50,7 @@ SELECT AddGeometryColumn ('table_name', 'column_name', 4326, 'POINT', 2)
 
 3. Coordinate extraction from column using *REGEX*(Necessary before data type change sql)
 ```sql
-update schema_name.table_name set longitude = substring (longitude FROM '\d+\.?\d*')
+update schema_name.table_name set longitude = substring (longitude FROM '\-?\d+\.?\d*');
 ```
 
 4. Change the data type
