@@ -15,6 +15,13 @@ The *FrequencySummary.py* helps you to count the colomn names. Remember to chang
 ```
 $ python FrequencySummary.py
 ```
+Data Format
+```bash
+#output encoding of your file
+$ file -i yourfile
+#convert encoding
+$ iconv options -f from-encoding -t to-encoding input -o output 
+```
 
 2. To reduce manual works that are simply some sqls with different table names, *SqlGenerator.py* is used to generate sqls for all your *.csv* files. The file generate sqls for using load_csv_file functions to import all the *.csv* files.
 
