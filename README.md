@@ -24,7 +24,14 @@ $ iconv options -f from-encoding -t to-encoding input -o output
 ```
 Delete empty columns
 <https://www.extendoffice.com/documents/excel/823-excel-delete-multiple-empty-columns.html>
-
+Or we can do it in sql:
+```sql
+SELECT * FROM table_name WHERE column_name IS NULL
+```
+If the last statement returns anything, then
+```sql
+ALTER TABLE table_name DROP COLUMN column_name;
+```
 2. To reduce manual works that are simply some sqls with different table names, *SqlGenerator.py* is used to generate sqls for all your *.csv* files. The file generate sqls for using load_csv_file functions to import all the *.csv* files.
 
 Remember to change the **mypath** variable in the code to your own directory to find these *.csv* files.
