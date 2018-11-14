@@ -22,6 +22,8 @@ $ file -i yourfile
 #convert encoding
 $ iconv options -f from-encoding -t to-encoding input -o output 
 ```
+Delete empty columns
+<https://www.extendoffice.com/documents/excel/823-excel-delete-multiple-empty-columns.html>
 
 2. To reduce manual works that are simply some sqls with different table names, *SqlGenerator.py* is used to generate sqls for all your *.csv* files. The file generate sqls for using load_csv_file functions to import all the *.csv* files.
 
