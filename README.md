@@ -88,7 +88,7 @@ ALTER TABLE your_table ADD COLUMN key_column BIGSERIAL PRIMARY KEY;
 SELECT *, ST_AsText(loc) FROM maintable WHERE ST_Contains(ST_GEOMFROMTEXT('SRID=4326;POLYGON((30 45,45 45,45 50,30 50,30 45))'),maintable.loc);
 ```
 
-8. Dump schema and restore, need to grant access to username.
+8. Dump schema and restore, need to grant access(both postgis and public, you need access to postgis and your own schema) to username.
 Make sure you are connected to the database through *psql*
 ```sql
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO username;
