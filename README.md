@@ -91,6 +91,8 @@ SELECT *, ST_AsText(loc) FROM maintable WHERE ST_Contains(ST_GEOMFROMTEXT('SRID=
 8. Dump schema and restore, need to grant access(both postgis and public, you need access to postgis and your own schema) to username.
 Make sure you are connected to the database through *psql*
 ```sql
+GRANT CONNECT ON DATABASE gisdb TO username;
+GRANT USAGE ON SCHEMA public TO ;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO username;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO username;
 ```
