@@ -9,12 +9,20 @@ The following link gives specifc instructions.
 
 Steps for adding new files
 --------------------------
-1. Import csv file, using *SqlsGenerator.py*, as well as adding some columns(date,tname,inc_id,latitude,longitude), among them date might be in the original file, but in a form of different names.
+Suppose you have a working database, if no, refer to in **Sqls**.8 for dump a database or create a empty maintable with columns(date,tname,inc_id,latitude,longitude and "possible trash types"). In the database, we have one table corresponding to each .csv file, one maintable containing street level information and one aggregatetable containing aggregated information from level 2 to level 6. At front end, we have *map.py* and *index.html* for visualizing the data. We use flask for web server and Google Api for map apis. 
+
+
+1. Import csv file, using *SqlsGenerator.py*, as well as adding some columns(date,tname,inc_id,latitude,longitude). Among them:date might be in the original file, but in a form of different name, (tname, latitude,longitude )are introduced in *SqlsGenerator.py*, inc_id can be found at No.6,  in **Sqls** Format problem can refore to  **Scripts**.1 and **Some Tips When Importing**, text to coordinates can refer to **Scripts**.3.
 
 2. Insert the data into maintable, with
 ```sql
 INSERT INTO maintable(date,tablename,tableid,latitude,longitude) SELECT date,tname,inc_id,latitude,longitude from public.YOURFILE
 ```
+3. Using *trashType.py* to integrate trash type information at level 1. The code is designated for all the points in maintable, it could be optimized to do just for newly added data, this also applies to *aggreType.py*.
+
+4. Using *levelDivide.py* to generate records from level 5 to 2 that include points from new dataset but left over by the aggregatetable, meaning aggregatetable from level 5 to 2 might not have corresponding record to contain all points for the new data. This is a "to do" implementation, but it can inherit the strategy from *levelDivide.py*.
+
+5. Using *aggreType.py* to integrate trash type information at level 2-5. Note that when creating aggregate table, we do it in a top-down approach, from 6 to 2. But when summarizing trash types, it is better to do in a bottom-up approach, from 1 to 6. As the code counts all the points in maintable and at each level(2-5), we could do this more efficiently, for example at level 2 we could set dataset name as condition and add the collected trash types amount to the existing record. There is one problem, aggregatable at level 2 might not have records containing the new point to be added, so No. 4 is necessary. 
 
 
 Scripts
