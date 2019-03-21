@@ -1,4 +1,4 @@
-Environmental Data Importing using POSTGIS based on postgreSQL
+Environmental Data Importing Management using POSTGIS based on postgreSQL, and visualization based on GoogleMap and Flask
 ==============================================================
 Install postgre and postgis before you start.
 
@@ -15,12 +15,12 @@ The *FrequencySummary.py* helps you to count the colomn names. Remember to chang
 ```
 $ python FrequencySummary.py
 ```
-Data Format
+Data Format, when the following code won't work, use text editor to load the file and save it, this can be scripted as shell command in Linux like system.
 ```bash
 #output encoding of your file
 $ file -i yourfile
 #convert encoding
-$ iconv options -f from-encoding -t to-encoding input -o output 
+$ iconv options -f from-encoding -t to-encoding input -o output
 ```
 Delete empty columns
 <https://www.extendoffice.com/documents/excel/823-excel-delete-multiple-empty-columns.html>
@@ -32,7 +32,7 @@ If the last statement returns anything, then
 ```sql
 ALTER TABLE table_name DROP COLUMN column_name;
 ```
-2. To reduce manual works that are simply some sqls with different table names, *SqlGenerator.py* is used to generate sqls for all your *.csv* files. The file generate sqls for using load_csv_file functions to import all the *.csv* files.
+2. To reduce manual works that are simply some sqls with different table names, *SqlGenerator.py* is used to generate sqls for all your *.csv* files to create maintable. The script generates sqls after all the *.csv* files imported by load_csv_file functions, these sqls can be executed using **cur.execute()** if further automation is needed, though the script only prints these sqls.
 
 Remember to change the **mypath** variable in the code to your own directory to find these *.csv* files.
 ```
@@ -42,6 +42,14 @@ $ python SqlsGenerator.py
 3. When you have some *.csv* files that only have location names but not the specific coordinates. Use *LocationToCooridnates.py* to extract the geographical locations from location names. In the case of this script, there are two columns that have related information to get coordinates, which are **water body** and **city**. This requires some basic understandings of python programming.
 
 The location description is limited to 10 words in order to avoid errors, this has not been tested for possible extension. This will generate another *.csv* file.
+
+4. *queryCmp.py* is used to compare customized queries at different scale, **polygon_select()** is used to select a polygon based on the same center but different areas in ascending order. Then the polygon can be used to measure the query performance using built-in logging mechanism from *psycopg2*, **queryCompare()** also records the statistics and plots the data.
+
+5. *levelDivide.py* is employed to divide the whole earth to 5 levels, from a user-defined whole earth division(level6.csv, including 10 districts), **level6Divide()** generates records for level 6, while **otherLevelDivide()** deal with levels from 5 to 2. This craetes points for aggregatetable.
+
+6. *trashType.py* is used to generate trash type summary in maintable, for every specific location, after this, we can collect trash types based on a bottom-up approach.
+
+7. *aggreType.py* is used to collect trash type information to inserted to aggregatetable based on maintable, **level2count()** summarizes trash types from maintable, while **otherLevelCount()** is responsible for level 3 to 6 based on itself(aggregatetable)
 
 Sqls
 ----
@@ -83,7 +91,7 @@ UPDATE maintable SET loc= ST_SetSRID(ST_MakePoint(longitude, latitude), 4326);
 ```sql
 ALTER TABLE your_table ADD COLUMN key_column BIGSERIAL PRIMARY KEY;
 ```
-7. Sample query of points in a polygon area, make sure the start point is the same withe the end one of that polygon
+7. Sample query of points in a polygon area, make sure the start point is the same withe the end one of that polygon, here ST_Contains can also be ST_Intersect for solving intersection, this is used in the flask backend query.
 ```sql
 SELECT *, ST_AsText(loc) FROM maintable WHERE ST_Contains(ST_GEOMFROMTEXT('SRID=4326;POLYGON((30 45,45 45,45 50,30 50,30 45))'),maintable.loc);
 ```
@@ -101,7 +109,10 @@ Then:
 $ pg_dump -U username -h host -p port -d database_name  -Fc -n schema > dumpfile_name.dump
 $ pg_restore -U username -h host -p port -d database_name dumpfile_name.dump
 ```
-
+9. Get a rectangle(envelop) from 4 coordinates
+```sql
+UPDATE maintable SET loc= ST_SetSRID(ST_MakeEnvelope(x1,y1,x2,y2), 4326);
+```
 Some tips when importing
 ------------------------
 1. There might be some column without names or with duplicated names, delete them if no data is in this column, or simply give it another name.

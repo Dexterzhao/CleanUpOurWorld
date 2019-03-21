@@ -1,0 +1,61 @@
+Color,Continent Or Ocean,Color Decription,area,nextlevel,bounds
+#FF0000,Africa,Red,75.98×91.41=6945,2x3,"
+      north: 37.53,
+      south: -53.88,
+      east: 51.45,
+      west: -24.53
+    "
+#00FFFF,Asia,Cyan,139.47x92.87=12952,5x5,"
+      north: 81.87,
+      south: -11,
+      east: -169.08,
+      west: 51.45
+    "
+#0000FF,Europe,Blue,75.98x44.34=3368.9532,2x3,"
+          north: 81.87,
+          south: 37.53,
+          east: 51.45,
+          west: -24.53
+        "
+#808080,NorthAmerica,Grey,144.55×69.42=10034,5x4,"
+          north: 81.87,
+          south: 12.45,
+          east: -24.53,
+          west: -169.08
+        "
+#FFFF00,Oceania,Yellow,78x42.88=3344.64,3x2,"
+          north: -11,
+          south: -53.88,
+          east: -169.08,
+          west: 112.92
+        "
+#FFA500,SouthAmerica,Orange,56.78x66.33=3766,2x2,"
+          north: 12.45,
+          south: -53.88,
+          east: -24.53,
+          west: -81.31
+        "
+#FF00FF,Arctic,Magenta,360x8.13=2926.8,12x1,"
+          north: 90,
+          south:  81.87,
+          east: 180,
+          west: -180.0
+        "
+#00FF00,PacificOcean,Green,87.77x66.33=5821,3x2,"
+          north: 12.45,
+          south: -53.88,
+          east: -81.31,
+          west: -169.08
+        "
+#000000,IndianOcean,Black,61.47x42.88=2635.8336,2x2,"
+          north: -11,
+          south: -53.88,
+          east: 112.92,
+          west: 51.45
+        "
+#808000,Antarctic,Olive,360x36.12=13003,12x2,"
+          north: -53.88,
+          south:  -90,
+          east: 180,
+          west: -180
+        "
