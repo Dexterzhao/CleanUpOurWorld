@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+
+<html>
+<style type="text/css">
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+  #level6UI, #level5UI, #level4UI, #level3UI, #level2UI, #level1UI {
+      background-color: #fff;
+      border: 2px solid #fff;
+      border-radius: 3px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+      cursor: pointer;
+      float: left;
+      margin-bottom: 22px;
+      text-align: center;
+  }
+  #level6Text, #level5UI, #level4UI, #level3UI, #level2UI, #level1UI {
+    color: rgb(25,25,25);
+    font-family: Roboto,Arial,sans-serif;
+    font-size: 15px;
+    line-height: 25px;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  #level5UI, #level4UI, #level3UI, #level2UI, #level1UI {
+    margin-left: 12px;
+  }
+  #legend {
+    background: #fff;
+    padding: 10px;
+    margin: 10px;
+    border: 3px solid #000;
+  }
+  #legend h3 {
+    margin-top: 0;
+  }
+  #legend img {
+    vertical-align: middle;
+  }
+</style>
+<!-- <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script> -->
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&key=YOURKEY&callback=initMap&language=en"></script>
+<script type="text/javascript">
+
+var map;
+var chicago = {lat: 41.85, lng: -87.65};
+var huntington = {lat: 33.632886521409,lng: -117.96155597901912};
+var riverside = {lat : 33.9806, lng: -117.3755};
+var markers = [];
+var level6recs = [];
+var markersOnMap = [];
+// wood-1, glass-2, fabric-3, metal-4, food-5, plastic-6, paper-7, other-8
+var iconBase = 'icons/';
+var icons = {
+  Wood: {
+    name: 'Wood',
+    icon: iconBase + 'Wood.png'
+  },
+  Glass:{
+    name: 'Glass',
+    icon: iconBase + 'Glass.png'
+  },
+  Fabric:{
+    name: 'Fabric',
+    icon: iconBase + 'Fabric.png'
+  },
+  Metal: {
+    name: 'Metal',
+    icon: iconBase + 'Metal.png'
+  },
+  Food:{
+    name: 'Food',
+    icon: iconBase + 'Food.png'
+  },
+  Plastic:{
+    name: 'Plastic',
+    icon: iconBase + 'Plastic.png'
+  },
+  Paper: {
+    name: 'Paper',
+    icon: iconBase + 'Paper.png'
+  },
+  Other:{
+    name: 'Other',
+    icon: iconBase + "Other.png"
+  }
+};
+
+google.load('visualization', '1', {
+  packages: ['corechart']
+});
+
+function ChartMarker(options) {
+  this.setValues(options);
+
+  this.$inner = $('<div>').css({
+    position: 'relative',
+    left: '-50%',
+    top: '-50%',
+    width: options.width,
+    height: options.height,
+    fontSize: '1px',
+    lineHeight: '1px',
+    backgroundColor: 'transparent',
+    cursor: 'default'
+  });
+
+  this.$div = $('<div>')
+    .append(this.$inner)
+    .css({
+      position: 'absolute',
+      display: 'none'
+    });
+};
+
+ChartMarker.prototype = new google.maps.OverlayView;
+
+ChartMarker.prototype.onAdd = function() {
+  $(this.getPanes().overlayMouseTarget).append(this.$div);
+};
+
+ChartMarker.prototype.onRemove = function() {
+  this.$div.remove();
+};
+
+ChartMarker.prototype.draw = function() {
+  var marker = this;
+  var projection = this.getProjection();
+  var position = projection.fromLatLngToDivPixel(this.get('position'));
+  var upperpos = projection.fromLatLngToDivPixel(this.get('upper'));
+  var lowerpos = projection.fromLatLngToDivPixel(this.get('lower'));
+  this.$div.css({
+    left: (upperpos.x+lowerpos.x)/2,
+    // left:position.x,
+    top: position.y,
+    display: 'block'
+  })
+
+  this.$inner
+    // .html('<img src="' + this.get('image') + '"/>')
+    .html('<img src=""/>')
+    .click(function(event) {
+      var events = marker.get('events');
+      // events && events.click(event);
+    });
+
+  this.chart = new google.visualization.PieChart(this.$inner[0]);
+  this.chart.draw(this.get('chartData'), this.get('chartOptions'));
+};
+
+
+
+function initialize() {
+  var latLng = [];
+  var length = 10;
+
+  // var latlist = {{lat_list}}
+  // var lonlist = {{lon_list}}
+  // for(var i = 0; i < length; i++) {
+  //     latLng.push(new google.maps.LatLng(latlist[i], lonlist[i]));
+  // }
+
+
+  map = new google.maps.Map($('#map_canvas')[0], {
+    zoom: 4,
+    center: huntington,
+    // zoomControl: false,
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+  });
+
+  var legend = document.getElementById('legend');
+  for (var key in icons) {
+    var type = icons[key];
+    var name = type.name;
+    var icon = type.icon;
+    var div = document.createElement('div');
+    div.innerHTML = '<img class = "legendIcon" src="' + icon + '"> ' + name;
+    legend.appendChild(div);
+  }
+
+  map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
+
+  legend.style.display = 'block';
+
+  map.setZoom(17);
+  map.setCenter(huntington);
+  google.maps.event.addListenerOnce(map, 'idle', function(){
+
+    showpoints();
+    var centerControlDiv = document.createElement('div');
+    var centerControl = new CenterControl(centerControlDiv, map);
+
+    centerControlDiv.index = 1;
+    centerControlDiv.style['padding-top'] = '10px';
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+    // zoom level: 4,5,6,9,12, 16(17,18)
+    map.addListener('zoom_changed',function(){
+      var zoom = map.getZoom();
+      var level6control = document.getElementById('level6UI');
+      var level5control = document.getElementById('level5UI');
+      var level4control = document.getElementById('level4UI');
+      var level3control = document.getElementById('level3UI');
+      var level2control = document.getElementById('level2UI');
+      var level1control = document.getElementById('level1UI');
+
+      switch(zoom) {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+          level6control.style.display = 'block';
+          level5control.style.display = 'none';
+          level4control.style.display = 'none';
+          level3control.style.display = 'none';
+          level2control.style.display = 'none';
+          level1control.style.display = 'none';
+          break;
+        case 6:
+          level6control.style.display = 'none';
+          level5control.style.display = 'block';
+          level4control.style.display = 'block';
+          level3control.style.display = 'none';
+          level2control.style.display = 'none';
+          level1control.style.display = 'none';
+          break;
+        case 7:
+        case 8:
+        case 9:
+          level6control.style.display = 'none';
+          level5control.style.display = 'none';
+          level4control.style.display = 'block';
+          level3control.style.display = 'block';
+          level2control.style.display = 'none';
+          level1control.style.display = 'none';
+          break;
+        case 10:
+        case 11:
+        case 12:
+          level6control.style.display = 'none';
+          level5control.style.display = 'none';
+          level4control.style.display = 'none';
+          level3control.style.display = 'block';
+          level2control.style.display = 'block';
+          level1control.style.display = 'none';
+          break;
+        default:
+          level6control.style.display = 'none';
+          level5control.style.display = 'none';
+          level4control.style.display = 'none';
+          level3control.style.display = 'none';
+          level2control.style.display = 'none';
+          level1control.style.display = 'block';
+          // code block
+      }
+
+    });
+  });
+
+
+}
+
+
+/**
+ * The function add buttons for views of different levels
+ * @constructor
+ * @param {!Element} controlDiv
+ * @param {!google.maps.Map} map
+ * @param {?google.maps.LatLng} center
+ */
+function CenterControl(controlDiv, map) {
+  // We set up a variable for this since we're adding event listeners
+  // later.
+  var control = this;
+  var legendcontrol = document.getElementById('legend');
+  // Set the center property upon construction
+  // control.center_ = center;
+  controlDiv.style.clear = 'both';
+
+  // Set CSS for the control border
+  var level6UI = document.createElement('div');
+  level6UI.id = 'level6UI';
+  level6UI.title = 'Click to view level 6';
+  controlDiv.appendChild(level6UI);
+
+  // Set CSS for the control interior
+  var level6Text = document.createElement('div');
+  level6Text.id = 'level6Text';
+  level6Text.innerHTML = 'Level 6';
+  level6UI.appendChild(level6Text);
+
+  // Set CSS for the level5 control border
+  var level5UI = document.createElement('div');
+  level5UI.id = 'level5UI';
+  level5UI.title = 'Click to view level 5';
+  controlDiv.appendChild(level5UI);
+
+  // Set CSS for the control interior
+  var level5Text = document.createElement('div');
+  level5Text.id = 'level5Text';
+  level5Text.innerHTML = 'Level 5';
+  level5UI.appendChild(level5Text);
+
+  // Set CSS for the level5 control border
+  var level4UI = document.createElement('div');
+  level4UI.id = 'level4UI';
+  level4UI.title = 'Click to view level 4';
+  controlDiv.appendChild(level4UI);
+
+  // Set CSS for the control interior
+  var level4Text = document.createElement('div');
+  level4Text.id = 'level4Text';
+  level4Text.innerHTML = 'Level 4';
+  level4UI.appendChild(level4Text);
+
+  // Set CSS for the level5 control border
+  var level3UI = document.createElement('div');
+  level3UI.id = 'level3UI';
+  level3UI.title = 'Click to view level 3';
+  controlDiv.appendChild(level3UI);
+
+  // Set CSS for the control interior
+  var level3Text = document.createElement('div');
+  level3Text.id = 'level3Text';
+  level3Text.innerHTML = 'Level 3';
+  level3UI.appendChild(level3Text);
+
+  // Set CSS for the level5 control border
+  var level2UI = document.createElement('div');
+  level2UI.id = 'level2UI';
+  level2UI.title = 'Click to view level 2';
+  controlDiv.appendChild(level2UI);
+
+  // Set CSS for the control interior
+  var level2Text = document.createElement('div');
+  level2Text.id = 'level2Text';
+  level2Text.innerHTML = 'Level 2';
+  level2UI.appendChild(level2Text);
+
+  // Set CSS for the level5 control border
+  var level1UI = document.createElement('div');
+  level1UI.id = 'level1UI';
+  level1UI.title = 'Click to view level 1';
+  controlDiv.appendChild(level1UI);
+
+  // Set CSS for the control interior
+  var level1Text = document.createElement('div');
+  level1Text.id = 'level1Text';
+  level1Text.innerHTML = 'Level 1';
+  level1UI.appendChild(level1Text);
+
+  level6UI.addEventListener('click', function(){
+    showchart(6);
+  });
+
+  level5UI.addEventListener('click', function() {
+    showchart(5);
+  });
+  level4UI.addEventListener('click',function(){
+    showchart(4);
+  } );
+
+  level3UI.addEventListener('click', function(){
+    showchart(3);
+  });
+
+  level2UI.addEventListener('click',function(){
+    showchart(2);
+  });
+
+  level1UI.addEventListener('click', function(){
+    showpoints();
+  });
+
+}
+
+function showpoints(){
+  var legendcontrol = document.getElementById('legend');
+  legendcontrol.style.display = 'block';
+  if(markers.length != 0)
+   for (var j = 0; j < markers.length; j++) {
+      markers[j].onRemove();
+      markers[i] = null;
+   }
+  markers = [];
+  if(level6recs.length != 0)
+    for (var j = 0; j < level6recs.length; j++) {
+       level6recs[j].setMap();
+       level6recs[j] = null;
+    }
+  level6recs = [];
+  if(markersOnMap.length != 0)
+    for (var i = 0; i < markersOnMap.length; i++) {
+      markersOnMap[i].setMap(null);
+      markersOnMap[i] = null;
+    }
+  markersOnMap = [];
+  google.maps.event.clearListeners(map,'dragend');
+
+  // map.setZoom(17);
+  // map.setCenter(huntington);
+  var level = map.getZoom();
+  var east = map.getBounds().toJSON().east;
+  var south = map.getBounds().toJSON().south;
+  var west = map.getBounds().toJSON().west;
+  var north = map.getBounds().toJSON().north;
+
+  var trashlist = ['Wood', 'Glass', 'Fabric', 'Metal', 'Food', 'Plastic', 'Paper', 'Other'];
+  var trashmarkers = [];
+  $.get("/zoomchange",{zoom:level,east:east,south:south,west:west,north:north}, function(data){
+      //clear markers
+      for (var i = 0; i < markersOnMap.length; i++) {
+        markersOnMap[i].setMap();
+      }
+      //read markers from response
+      for(var mi = 0; mi < data.length; mi ++){
+          typearr = data[mi].slice(8,15);
+          //if no type then it's 'other' type
+          if(typearr.reduce(getSum) == 0){
+            typearr[7] = 100;
+          }
+          trashmarkers[mi] ={
+            coords:{lat:data[mi][4],lng:data[mi][5]},
+            type : trashlist[indexOfMax(typearr)],
+            content : '<table >\
+              <tr>\
+                <td >level</td>\
+                <td >'+data[mi][0].toString()+'</td>\
+              </tr>\
+              <tr>\
+                <td >date</td>\
+                <td >'+data[mi][1]+'</td>\
+              </tr>\
+              <tr>\
+                <td >table name</td>\
+                <td >'+data[mi][2]+'</td>\
+              </tr>\
+              <tr>\
+                <td >table id</td>\
+                <td >'+data[mi][3].toString()+'</td>\
+              </tr>\
+              <tr>\
+                <td >latitude</td>\
+                <td >'+data[mi][4].toString()+'</td>\
+              </tr>\
+              <tr>\
+                <td >longitude</td>\
+                <td >'+data[mi][5].toString()+'</td>\
+              </tr>\
+              <tr>\
+                <td >incremental id</td>\
+                <td >'+data[mi][7].toString()+'</td>\
+              </tr>\
+              </table>'}
+      }
+
+      // Loop through markers
+      for(var i = 0;i < trashmarkers.length;i++){
+        // Add marker
+        addMarker(trashmarkers[i]);
+      }
+  });
+}
+
+function showchart(level){
+    // zoom level: 4,5,6,9,12, 16(17,18)
+    // window.alert('showchart executed');
+    var legendcontrol = document.getElementById('legend');
+    legendcontrol.style.display = 'none';
+    if(markers.length != 0)
+     for (var j = 0; j < markers.length; j++) {
+        markers[j].onRemove();
+        markers[i] = null;
+     }
+    markers = [];
+    if(level6recs.length != 0)
+      for (var j = 0; j < level6recs.length; j++) {
+         level6recs[j].setMap();
+         level6recs[j] = null;
+      }
+    level6recs = [];
+    if(markersOnMap.length != 0)
+      for (var i = 0; i < markersOnMap.length; i++) {
+        markersOnMap[i].setMap(null);
+        markersOnMap[i] = null;
+      }
+    markersOnMap = [];
+    google.maps.event.clearListeners(map,'dragend');
+
+    // map.setZoom(4);
+
+    var bounds = map.getBounds().toString();
+    // $.get("/zoomchange",{zoom:level,bound:bounds},https://developers.google.com/maps/documentation/javascript/events function(data){
+    //   window.alert(data)
+    // });
+
+    var latLng = [];
+    var latlist = [];
+    var lonlist = [];
+    var upperlat =[];
+    var lowerlat =[];
+    var upperlatlng = [];
+    var lowerlatlng = [];
+
+    var length = 10;
+
+    var bounds =map.getBounds();
+
+    var east = bounds.toJSON().east;
+    var south = bounds.toJSON().south;
+    var west = bounds.toJSON().west;
+    var north = bounds.toJSON().north;
+
+    // for(var i = 0; i < length; i++) {
+    //     latLng.push(new google.maps.LatLng(latlist[i], lonlist[i]));
+    // }
+
+    $.get("/zoomchangechart",{zoom:level,east:east,south:south,west:west,north:north}, function(data){
+        //clear markers
+        // for (var i = 0; i < markersOnMap.length; i++) {
+        //  markersOnMap[i].setMap();
+        // }
+        //read markers from response
+        var trash_num = [];
+        for(var mi = 0; mi < data.length; mi ++)
+          trash_num[mi] = [];
+        for(var mi = 0; mi < data.length; mi ++){
+          latlist.push((data[mi][6]+data[mi][7])/2);
+          upperlat.push(data[mi][6]);
+          lowerlat.push(data[mi][7]);
+          if(data[mi][8]>data[mi][9])
+            lonlist.push((data[mi][8]+data[mi][9])/2);
+          else
+            lonlist.push((data[mi][8]+data[mi][9]+360.0)/2-360.0);
+          level6recs.push(new google.maps.Rectangle({
+            strokeColor: '#FFFFFF',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#ffffff00',
+            fillOpacity: 0.35,
+            map: map,
+            bounds: {
+              north: data[mi][6],
+              south: data[mi][7],
+              east: data[mi][8],
+              west: data[mi][9]
+            }
+          }));
+          for(var ri = 0; ri <8; ri++ ){
+            trash_num[mi][ri] = data[mi][ri+11];
+          }
+
+        }
+
+        for(var i = 0; i < latlist.length; i++){
+            // upperlat.push(new google.maps.LatLng(latlist[i], lonlist[i]));
+            latLng.push(new google.maps.LatLng(latlist[i], lonlist[i]));
+            upperlatlng.push(new google.maps.LatLng(upperlat[i], lonlist[i]));
+            lowerlatlng.push(new google.maps.LatLng(lowerlat[i], lonlist[i]));
+        }
+
+        // wood-1, glass-2, fabric-3, metal-4, food-5, plastic-6, paper-7, other-8
+        var options = {
+          fontSize: 8,
+          backgroundColor: 'transparent',
+          legend: 'none'
+        };
+
+
+        for (var j = 0; j <latLng.length; j++) {
+            if(trash_num[j].reduce(getSum) == 0){
+              trash_num[j][7] = 100;
+            }
+            markers[j] = new ChartMarker({
+              upper : upperlatlng[j],
+              lower : lowerlatlng[j],
+              map: map,
+              position: latLng[j],
+              width: '300px',
+              height: '300px',
+              chartData: google.visualization.arrayToDataTable([
+                ['Trash Type', 'Percent makeup'],
+                ['Wood', trash_num[j][0]],
+                ['Glass', trash_num[j][1]],
+                ['Fabric',trash_num[j][2]],
+                ['Metal', trash_num[j][3]],
+                ['Food', trash_num[j][4]],
+                ['Plastic', trash_num[j][5]],
+                ['Paper', trash_num[j][6]],
+                ['Other', trash_num[j][7]]
+              ]),
+              chartOptions: options,
+              events: {
+                // click: function(event) {
+                //   alert('Clicked marker');
+                }
+            });
+        }
+    });
+}
+
+// Add Marker Function
+function addMarker(props){
+  // window.alert()
+  var min=0;
+  var max=7;
+  var randomindex =1;
+  var iconarr = ['Wood', 'Glass', 'Fabric', 'Metal', 'Food', 'Plastic', 'Paper', 'Other'];
+  var marker = new google.maps.Marker({
+    position:props.coords,
+    map:map,
+    //icon:props.iconImage
+  });
+  markersOnMap.push(marker);
+
+  // Check for customicon
+  if(props.type){
+    // Set icon image
+
+    // randomindex = Math.floor(Math.random() * (+max - +min)) + +min;
+    marker.setIcon(icons[props.type].icon);
+  }
+
+  // Check content
+  if(props.content){
+    var infoWindow = new google.maps.InfoWindow({
+      content:props.content
+    });
+
+    marker.addListener('click', function(){
+      infoWindow.open(map, marker);
+    });
+  }
+}
+
+function placeMarkerAndPanTo(latLng, map) {
+        var marker = new google.maps.Marker({
+          position: latLng,
+          map: map
+        });
+        map.panTo(latLng);
+}
+function getSum(total, num) {
+    return total + num;
+}
+
+function indexOfMax(arr) {
+    if (arr.length == 0) {
+        return -1;
+    }
+
+    var max = arr[0];
+    var maxIndex = 0;
+
+    for (var i = 1; i < arr.length; i++) {
+        if (arr[i] > max) {
+            maxIndex = i;
+            max = arr[i];
+        }
+    }
+
+    return maxIndex;
+}
+
+
+$(initialize);
+
+</script>
+    <body>
+        <div id="map_canvas" style="height: 100%; width: 100%"></div>
+        <div id="legend"></div>
+    </body>
+</html>

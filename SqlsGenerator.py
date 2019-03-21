@@ -16,7 +16,7 @@ for filename in onlyfiles:
     cn = df.columns
     n = cn.tolist()
 
-    #importing sql
+    #importing csv
     print('select load_csv_file(\''+filename+'\',\'/home/dexter/Documents/PostGisData/'+filename+'\''+','+str(len(n))+');'+'\n')
 
     # update public."TotalOldCCdata" set longitude = substring (longitude FROM '\-?\d+\.?\d*');

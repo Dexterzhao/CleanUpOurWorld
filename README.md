@@ -1,9 +1,21 @@
 Environmental Data Importing Management using POSTGIS based on postgreSQL, and visualization based on GoogleMap and Flask
 ==============================================================
+
+
 Install postgre and postgis before you start.
 
 The following link gives specifc instructions.
 <https://trac.osgeo.org/postgis/wiki/UsersWikiPostGIS24UbuntuPGSQL10Apt>
+
+Steps for adding new files
+--------------------------
+1. Import csv file, using *SqlsGenerator.py*, as well as adding some columns(date,tname,inc_id,latitude,longitude), among them date might be in the original file, but in a form of different names.
+
+2. Insert the data into maintable, with
+```sql
+INSERT INTO maintable(date,tablename,tableid,latitude,longitude) SELECT date,tname,inc_id,latitude,longitude from public.YOURFILE
+```
+
 
 Scripts
 -------
@@ -39,9 +51,7 @@ Remember to change the **mypath** variable in the code to your own directory to 
 $ python SqlsGenerator.py
 ```
 
-3. When you have some *.csv* files that only have location names but not the specific coordinates. Use *LocationToCooridnates.py* to extract the geographical locations from location names. In the case of this script, there are two columns that have related information to get coordinates, which are **water body** and **city**. This requires some basic understandings of python programming.
-
-The location description is limited to 10 words in order to avoid errors, this has not been tested for possible extension. This will generate another *.csv* file.
+3. When you have some *.csv* files that only have location names but not the specific coordinates. Use *LocationToCooridnates.py* to extract the geographical locations from location names. In the case of this script, there are two columns that have related information to get coordinates, which are **water body** and **city**. This requires some basic understandings of python programming.  The location description is limited to 10 words in order to avoid errors, this has not been tested for possible extension. This will generate another *.csv* file.
 
 4. *queryCmp.py* is used to compare customized queries at different scale, **polygon_select()** is used to select a polygon based on the same center but different areas in ascending order. Then the polygon can be used to measure the query performance using built-in logging mechanism from *psycopg2*, **queryCompare()** also records the statistics and plots the data.
 
@@ -112,6 +122,15 @@ $ pg_restore -U username -h host -p port -d database_name dumpfile_name.dump
 9. Get a rectangle(envelop) from 4 coordinates
 ```sql
 UPDATE maintable SET loc= ST_SetSRID(ST_MakeEnvelope(x1,y1,x2,y2), 4326);
+```
+Web Application
+---------------
+1. The web visualization is based on Flask and GoogleApi. Install flask at <http://flask.pocoo.org/>, get google api key at <https://developers.google.com/maps/documentation/javascript/tutorial>
+
+2. To run the application, using your username and password for *database.ini*
+```bash
+export FLASK_APP=map.py
+flask run
 ```
 Some tips when importing
 ------------------------
